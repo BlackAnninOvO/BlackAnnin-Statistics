@@ -96,7 +96,8 @@ public final class SessionHud {
         long now2 = System.currentTimeMillis();
         StatSnapshot delta = stats.vanillaDelta(); // 触发 500ms 缓存刷新（死亡/击杀仍需逐项读取）
         long placed = SessionTracker.get().sessionPlacedTotal();
-        long mined = stats.vanillaDeltaSum("minecraft:mined");
+        // 破坏 = 原版统计增量（生存/冒险） + 创造模式客户端确认增量（生存下后者恒为 0）
+        long mined = stats.vanillaDeltaSum("minecraft:mined") + SessionTracker.get().sessionMinedTotal();
         long pickedUp = stats.vanillaDeltaSum("minecraft:picked_up");
         long crafted = stats.vanillaDeltaSum("minecraft:crafted");
         long deaths = delta.get("minecraft:custom", "minecraft:deaths");

@@ -4,6 +4,8 @@
 
 **在 Minecraft 中完整记录并查看你的游玩数据 —— 按存档、按服务器，跨客户端累计**
 
+**Full per-world & per-server statistics for Minecraft — accumulated across client and version changes.**
+
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-blue)](https://www.minecraft.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange)](https://neoforged.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -152,17 +154,141 @@ gradlew test         # 运行单元测试
 gradlew runClient    # 启动开发客户端
 ```
 
-## 文档
+---
 
-- [PROJECT.md](PROJECT.md) — 完整项目文档：架构、每个文件的代码作用、核心机制原理、配置说明、修改指南
-- [ARCHITECTURE.md](ARCHITECTURE.md) — 架构简述与数据采集方式
-- [TESTPLAN.md](TESTPLAN.md) — 测试清单
-- [CURSEFORGE.md](CURSEFORGE.md) — CurseForge 页面文案
+<a id="english"></a>
 
-## 英文简介 / English
+# BlackAnnin's Statistics (English)
 
-A client-side statistics mod for Minecraft 1.21.1 (NeoForge). Every world and server you play on gets its own statistics file, all collected into one hub — and your data keeps accumulating across version changes, launchers and client installations. Pure client-side: works on any server without installing anything there, stored as plain JSON locally with zero network access. See [PROJECT.md](PROJECT.md) for the full documentation.
+A client-side statistics mod for Minecraft 1.21.1 (NeoForge) that fixes what the vanilla statistics screen never did: **per-world and per-server records, combined into one hub, kept across client and version changes**.
 
-## 许可
+## Features
 
-本项目以 [MIT License](LICENSE) 发布。工程模板源自 [NeoForged MDK](https://github.com/NeoForged/MDK)。
+- **Complete statistics** — play time, blocks broken/placed, mobs killed/killed by, items crafted/used/broken/picked up/dropped, deaths, jumps, every distance stat; blocks, items and entities added by other mods are automatically included (with icons).
+- **Three-level views** — Global / Singleplayer (per world) / Multiplayer (per server); drill down into any world, or view combined totals.
+- **Multi-profile** — data from different accounts / offline names is tracked separately; view one profile or everything combined.
+- **Placed-block statistics** — vanilla has no "blocks placed" stat; this mod counts them client-side (your own placements only, works in creative & survival, singleplayer & multiplayer).
+- **"This session" HUD** — live per-session stats: time, placed, mined, picked up, crafted, deaths, kills. Shows automatically whenever a screen is open, toggle on-screen display with **F9**, resets when you leave a world. Corner, opacity and every line configurable.
+- **Pin statistics** — right-click any entry to pin it (gold star); pins survive across worlds, servers and game instances.
+- **Two time scales** — **real time** (wall clock) and **in-game time** (game ticks) are clearly labeled on every time stat.
+- **Data management** — plain JSON you can edit by hand; in-game deletion per location / per profile / everything (with confirmation).
+
+## Installation
+
+1. Install [NeoForge](https://neoforged.net/) 1.21.1;
+2. Drop `blackannins_statistics-1.0.0.jar` into your `mods` folder;
+3. That's it — **nothing to install server-side**, works on vanilla and third-party servers alike.
+
+## Getting started
+
+- **Stats hub**: Esc → "Statistics" (taken over by this mod), or the hub button on the title screen;
+- **Tabs**: Global / Singleplayer / Multiplayer, drill down into any world or server;
+- **Categories**: General / Blocks / Items / Mobs, with search and sortable columns;
+- **Pin**: right-click any entry;
+- **Profiles**: button at the top right (each account / offline name is tracked separately);
+- **Session HUD**: shows whenever a screen is open; press **F9** to keep it on-screen during gameplay;
+- **Client commands**: `/bas open`, `/bas status`, `/bas vanilla`, and more.
+
+## Data & privacy
+
+- All data is stored as **plain JSON** in your local `.minecraft/blackannins_statistics/` folder — **no uploads, no network, no telemetry**;
+- Files can be edited or backed up by hand; corrupted files are quarantined into `backups/` automatically;
+- The in-game Manage tab deletes per location / per profile / everything (all with confirmation dialogs).
+
+<details>
+<summary><b>Data layout</b> (click to expand)</summary>
+
+```
+<data folder>/
+├── profiles.json                        unified index: profiles + pinned entries
+├── backups/                             corrupted-file quarantine
+└── data/
+    ├── singleplayer/<world>/<player UUID>.json
+    └── multiplayer/<server address>/<player UUID>.json
+```
+
+The default folder is `C:\Users\ASUS\AppData\Roaming\.minecraft\blackannins_statistics\`, override it in the config; it falls back to the game directory if the fixed path is unavailable.
+
+</details>
+
+## FAQ
+
+<details>
+<summary><b>Is my data kept when I switch clients or game versions?</b></summary>
+
+Yes — data lives in a fixed folder, independent of your launcher or client installation. That is the core design of this mod: everything you play under the same account flows into the same profile.
+</details>
+
+<details>
+<summary><b>Does the server need this mod?</b></summary>
+
+No. It is purely client-side — vanilla and third-party servers both work, and installing it on a server changes nothing.
+</details>
+
+<details>
+<summary><b>Why are "in-game time" and "real time" so different?</b></summary>
+
+They use different scales on purpose:
+
+- **In-game time** comes from server-side vanilla stats and starts from the stat baseline (it includes time from before you installed the mod, and it keeps running while the server is up, even AFK);
+- **Real time** only starts counting once the mod is installed.
+
+"In-game 133 h / real 52 h" is therefore normal — the gap shows how much history predates the mod.
+</details>
+
+<details>
+<summary><b>How are placed blocks counted?</b></summary>
+
+Vanilla has no "blocks placed" stat. This mod records placement intent on the client and counts a block only after it really appears in the world — so it works in creative & survival, singleplayer & multiplayer, and only counts blocks **you** place. Every block from FTB Ultimine chain placing is counted individually.
+</details>
+
+<details>
+<summary><b>Does FTB Ultimine chain mining interfere?</b></summary>
+
+No. Every block mined through chain breaking is destroyed through the normal server flow and lands in the mined stats; every block from chain placing is counted in the placed stats.
+</details>
+
+<details>
+<summary><b>Data files corrupted / want to reset?</b></summary>
+
+Corrupted files are quarantined into `backups/` automatically without affecting the game. To reset data for a world or server, open the hub → Manage → delete the entry.
+</details>
+
+## Configuration
+
+Everything lives in **Mods → BlackAnnin's Statistics → Config** (localized), or edit `config/blackannins_statistics-client.toml` directly:
+
+| Option | Default | Description |
+|---|---|---|
+| Replace vanilla statistics screen | On | The "Statistics" button opens this mod's hub |
+| Autosave interval (seconds) | 60 | Periodic save while playing |
+| Multiplayer stats sync interval (seconds) | 30 | How often stats are requested from the server |
+| Data directory override | empty | Absolute path for stored data, empty = default |
+| Aggregate all profiles on Global tab | Off | Show the sum of all profiles by default |
+| Enable this-session HUD | On | Master toggle for the session HUD |
+| HUD corner | Top Left | Where the HUD is anchored (TL/TR/BL/BR) |
+| HUD background opacity | 56 | 0 = fully transparent, 100 = opaque |
+| HUD: show real time | On | Real-time line |
+| HUD: show in-game time | On | In-game time line |
+| HUD: show placed blocks | On | Session placed count |
+| HUD: show mined blocks | On | Session mined count |
+| HUD: show picked up items | On | Session pickup count |
+| HUD: show crafted items | On | Session craft count |
+| HUD: show deaths | On | Session deaths |
+| HUD: show mob kills | On | Session mob kills |
+
+## Building
+
+Requires JDK 21:
+
+```bash
+git clone <this repo>
+cd blackanninsstatistics-template-1.21.1
+gradlew build        # jar lands in build/libs/
+gradlew test         # unit tests
+gradlew runClient    # dev client
+```
+
+## License
+
+Released under the [MIT License](LICENSE). Based on the [NeoForged MDK](https://github.com/NeoForged/MDK) template.

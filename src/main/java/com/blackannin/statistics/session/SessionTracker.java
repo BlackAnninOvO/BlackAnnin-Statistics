@@ -27,6 +27,9 @@ public final class SessionTracker {
     public static final String CUSTOM_TYPE = "blackannins_statistics:custom";
     /** 现实游玩时长（毫秒）：进入世界到离开的真实墙钟时间，不受游戏卡顿/暂停影响。 */
     public static final String REAL_TIME_KEY = "blackannins_statistics:real_play_time";
+    /** 原版统计类型：方块破坏数（生存/冒险由原版统计负责；创造模式下原版不授予该统计，
+     *  由客户端确认式采集补充，见 ClientEvents 破坏采集。两种来源共用同一键位与基线+增量公式）。 */
+    public static final String MINED_TYPE = "minecraft:mined";
 
     private static final SessionTracker INSTANCE = new SessionTracker();
 
@@ -46,6 +49,12 @@ public final class SessionTracker {
             new java.util.concurrent.ConcurrentHashMap<>();
     /** 会话开始时从磁盘载入的放置基线（落盘值恒为 基线+会话增量，杜绝任何形式的重复叠加）。 */
     private java.util.Map<String, Long> loadedPlaced;
+
+    /** 创造模式会话确认的破坏增量（方块 id → 次数）：原版统计在创造下不计数，由客户端确认采集补充。 */
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> sessionMined =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    /** 会话开始时从磁盘载入的破坏基线（落盘值恒为 基线+会话增量；生存/冒险下增量恒为空，由原版计数器读数负责）。 */
+    private java.util.Map<String, Long> loadedMinedBaseline;
 
     /** 现实游玩时长：会话起点与上次并入快照的时刻（毫秒）。 */
     private volatile long lastRealTimeFlushMillis;
@@ -138,6 +147,9 @@ public final class SessionTracker {
         // 放置计数的落盘基线：固定为载入时的磁盘值，会话增量恒等叠加不会重复
         loadedPlaced = new java.util.HashMap<>(store.stats.getType(PLACED_TYPE));
         sessionPlaced.clear();
+        // 破坏计数的落盘基线：同款公式（仅创造模式增量生效，生存/冒险由原版计数器读数负责）
+        loadedMinedBaseline = new java.util.HashMap<>(store.stats.getType(MINED_TYPE));
+        sessionMined.clear();
         sessionStats.begin(System.currentTimeMillis());
 
         if (profileIndex == null) {
@@ -171,6 +183,15 @@ public final class SessionTracker {
             sessionPlaced.forEach((blockId, sessionCount) ->
                     fresh.put(PLACED_TYPE, blockId,
                             loadedPlaced.getOrDefault(blockId, 0L) + sessionCount));
+        }
+
+        // 方块破坏（创造模式增量）：与放置同款"磁盘基线 + 会话增量"叠加。
+        // 生存/冒险下本会话增量为空，破坏值完全由原版计数器读数（fresh）负责；
+        // 若同一方块两种来源并存，mergeMax 取历史最大，不会回退。
+        if (!sessionMined.isEmpty() && loadedMinedBaseline != null) {
+            sessionMined.forEach((blockId, sessionCount) ->
+                    fresh.put(MINED_TYPE, blockId,
+                            loadedMinedBaseline.getOrDefault(blockId, 0L) + sessionCount));
         }
 
         // 现实游玩时长：并入自上次落盘以来的墙钟增量
@@ -234,6 +255,8 @@ public final class SessionTracker {
         syncRequestedOnce = false;
         sessionPlaced.clear();
         loadedPlaced = null;
+        sessionMined.clear();
+        loadedMinedBaseline = null;
         lastRealTimeFlushMillis = 0L;
         sessionStats.end();
     }
@@ -247,6 +270,18 @@ public final class SessionTracker {
                     blockId, sessionPlaced.get(blockId));
         } else {
             BlackAnninsStatistics.LOGGER.warn("[BAS] 放置计数被丢弃（无活动会话）: {}", blockId);
+        }
+    }
+
+    /** 方块破坏事件入口（客户端确认式采集，仅创造模式启用；事件在客户端 tick 线程触发）。
+     *  生存/冒险下事件桥不会调用本入口（原版统计负责，避免双计）。 */
+    public void onBlockMined(String blockId) {
+        if (activeStore != null) {
+            sessionMined.merge(blockId, 1L, Long::sum);
+            BlackAnninsStatistics.LOGGER.info("[BAS] 破坏已计数: {} (本次会话 {})",
+                    blockId, sessionMined.get(blockId));
+        } else {
+            BlackAnninsStatistics.LOGGER.warn("[BAS] 破坏计数被丢弃（无活动会话）: {}", blockId);
         }
     }
 
@@ -264,6 +299,20 @@ public final class SessionTracker {
     public long sessionPlacedTotal() {
         long total = 0;
         for (long v : sessionPlaced.values()) {
+            total += v;
+        }
+        return total;
+    }
+
+    /** 会话内破坏计数明细（创造模式确认增量），供 /bas status 核验。 */
+    public java.util.Map<String, Long> sessionMinedView() {
+        return new java.util.TreeMap<>(sessionMined);
+    }
+
+    /** 本次会话破坏总数（创造模式增量；生存/冒险下恒为 0，HUD 小窗叠加在原版增量之上）。 */
+    public long sessionMinedTotal() {
+        long total = 0;
+        for (long v : sessionMined.values()) {
             total += v;
         }
         return total;
@@ -317,6 +366,19 @@ public final class SessionTracker {
                 long v = loadedPlaced.getOrDefault(id, 0L) + sessionPlaced.getOrDefault(id, 0L);
                 if (v > 0) {
                     live.stats.put(PLACED_TYPE, id, v);
+                }
+            }
+        }
+        // 破坏计数实时合成（创造模式）：磁盘基线 + 会话确认增量。
+        // 取 max 与原版计数器读数比较：生存期原版历史值可能更高，避免实时视图回退。
+        if (loadedMinedBaseline != null) {
+            java.util.Set<String> minedIds = new java.util.HashSet<>(loadedMinedBaseline.keySet());
+            minedIds.addAll(sessionMined.keySet());
+            for (String id : minedIds) {
+                long v = loadedMinedBaseline.getOrDefault(id, 0L) + sessionMined.getOrDefault(id, 0L);
+                long vanilla = live.stats.get(MINED_TYPE, id);
+                if (v > vanilla) {
+                    live.stats.put(MINED_TYPE, id, v);
                 }
             }
         }

@@ -54,12 +54,25 @@ public final class ClientEvents {
 
     private record PendingPlacement(Block block, BlockState before, long expireTick) {}
 
-    /** 每 tick 驱动会话跟踪与放置确认（内部按秒级节流，tick 本身只做空检查级别的判断）。 */
+    /**
+     * 待确认的方块破坏：创造模式下原版不授予 minecraft:mined 统计
+     * （ServerPlayerGameMode#destroyBlock 在 isCreative() 时直接返回，不调用 Block#playerDestroy），
+     * 与放置采集同款采用客户端确认式采集：左键开始破坏瞬间记录意图（目标位置 + 当时状态），
+     * 之后的客户端 tick 中确认该位置状态发生了变化，超时未确认则丢弃。
+     * 生存/冒险模式不启用（原版统计负责），杜绝双计。
+     */
+    private static final Map<BlockPos, PendingBreak> PENDING_BREAKS = new LinkedHashMap<>();
+    private static final int BREAK_CONFIRM_TICKS = 40;
+
+    private record PendingBreak(Block block, BlockState before, long expireTick) {}
+
+    /** 每 tick 驱动会话跟踪与放置/破坏确认（内部按秒级节流，tick 本身只做空检查级别的判断）。 */
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         SessionTracker.get().tick();
         clientTickCounter++;
         processPendingPlacements();
+        processPendingBreaks();
         SessionHud.consumeToggle();
     }
 
@@ -119,6 +132,64 @@ public final class ClientEvents {
                 ResourceLocation key = BuiltInRegistries.BLOCK.getKey(pending.block());
                 if (key != null) {
                     SessionTracker.get().onBlockPlaced(key.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * 记录破坏意图（仅本机客户端侧交互；仅创造模式启用——原版统计在创造下不计数，
+     * 生存/冒险由原版统计负责，避免双计；集成服务器的 ServerPlayer 由此天然排除）。
+     */
+    @SubscribeEvent
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (!(event.getEntity() instanceof LocalPlayer localPlayer) || localPlayer != mc.player) {
+                return;
+            }
+            if (!localPlayer.isCreative()) {
+                return; // 生存/冒险：原版统计负责
+            }
+            Level level = event.getLevel();
+            BlockPos pos = event.getPos();
+            BlockState before = level.getBlockState(pos);
+            Block block = before.getBlock();
+            PENDING_BREAKS.put(pos.immutable(),
+                    new PendingBreak(block, before, clientTickCounter + BREAK_CONFIRM_TICKS));
+            // 诊断日志：定位破坏采集链路（复现问题后可降为 DEBUG）
+            BlackAnninsStatistics.LOGGER.info("[BAS] 破坏意图: {} @ {} (before={})",
+                    BuiltInRegistries.BLOCK.getKey(block), pos, block);
+        } catch (Exception e) {
+            // 防御：个别模组构造的异常交互不应中断计数链，也不影响游戏
+            BlackAnninsStatistics.LOGGER.warn("[BAS] 破坏意图记录异常（已跳过该次）", e);
+        }
+    }
+
+    /** 确认破坏：目标位置状态与记录时不同（方块被移除或替换）即计数。 */
+    private static void processPendingBreaks() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            PENDING_BREAKS.clear();
+            return;
+        }
+        if (PENDING_BREAKS.isEmpty()) {
+            return;
+        }
+        Iterator<Map.Entry<BlockPos, PendingBreak>> iterator = PENDING_BREAKS.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<BlockPos, PendingBreak> entry = iterator.next();
+            PendingBreak pending = entry.getValue();
+            if (clientTickCounter > pending.expireTick()) {
+                iterator.remove();
+                continue;
+            }
+            BlockState current = mc.level.getBlockState(entry.getKey());
+            if (!current.equals(pending.before())) {
+                iterator.remove();
+                ResourceLocation key = BuiltInRegistries.BLOCK.getKey(pending.block());
+                if (key != null) {
+                    SessionTracker.get().onBlockMined(key.toString());
                 }
             }
         }

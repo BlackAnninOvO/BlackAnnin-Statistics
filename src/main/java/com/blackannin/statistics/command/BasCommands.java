@@ -48,6 +48,12 @@ public final class BasCommands {
                     ctx.getSource().sendSuccess(() -> Component.literal("已注入 1 次放置测试（石头），输入 /bas resync 落盘"), false);
                     return 1;
                 }))
+                .then(literal("testmine").executes(ctx -> {
+                    // 诊断命令：绕过事件链直接注入一次破坏计数（创造模式采集链路的自检）
+                    SessionTracker.get().onBlockMined("minecraft:stone");
+                    ctx.getSource().sendSuccess(() -> Component.literal("已注入 1 次破坏测试（石头），输入 /bas resync 落盘"), false);
+                    return 1;
+                }))
                 .then(literal("dir").executes(ctx -> {
                     String dir = StoragePaths.get().root().toString();
                     ctx.getSource().sendSuccess(() -> Component.literal("数据目录: " + dir), false);
@@ -76,6 +82,22 @@ public final class BasCommands {
                                 "合计 " + finalTotal + "（统计中心显示值 = 该明细 + 历史存量，无其他来源）"), false);
                     } else {
                         ctx.getSource().sendSuccess(() -> Component.literal("本次会话尚无放置确认"), false);
+                    }
+                    // 会话内破坏计数明细（创造模式确认增量；生存/冒险由原版统计负责，此表为空）
+                    var mined = tracker.sessionMinedView();
+                    if (!mined.isEmpty()) {
+                        ctx.getSource().sendSuccess(() -> Component.literal("本次会话破坏确认明细（创造模式采集）："), false);
+                        long minedTotal = 0;
+                        for (var e : mined.entrySet()) {
+                            minedTotal += e.getValue();
+                            ctx.getSource().sendSuccess(() -> Component.literal(
+                                    "  " + e.getKey() + " × " + e.getValue()), false);
+                        }
+                        long finalMinedTotal = minedTotal;
+                        ctx.getSource().sendSuccess(() -> Component.literal(
+                                "合计 " + finalMinedTotal + "（生存/冒险模式由原版统计负责，此处仅列出创造模式增量）"), false);
+                    } else {
+                        ctx.getSource().sendSuccess(() -> Component.literal("本次会话尚无破坏确认（生存/冒险由原版统计）"), false);
                     }
                     return 1;
                 })));
