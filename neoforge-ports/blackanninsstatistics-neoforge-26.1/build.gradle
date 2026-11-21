@@ -149,12 +149,10 @@ configurations {
 
 dependencies {
     // 纯 Java 核心层（stat/session 数据结构）的单元测试。
-    // JUnit 5.11.3 从 Maven Central（或上方配置的腾讯镜像）在线解析，
-    // CI 与克隆者环境均无需任何本地 jar。
-    testImplementation platform('org.junit:junit-bom:5.11.3')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.google.code.gson:gson:2.11.0'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // 说明：本机 maven.neoforged.net 被 DNS 污染导致在线解析易卡死，
+    // 测试依赖固定为仓库内 libs/test 下的本地 jar（来源 JUnit 5.11.3 / Gson 2.11.0），
+    // 网络正常环境下可换回：testImplementation platform('org.junit:junit-bom:5.11.3') 等。
+    testImplementation fileTree('libs/test') { include '*.jar' }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -163,6 +161,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
+            neo_version_range      : neo_version_range,
             neo_version            : neo_version,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,

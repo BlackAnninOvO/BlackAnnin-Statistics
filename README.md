@@ -19,21 +19,21 @@
 
 每个 Minecraft 版本线一个独立目录（各自的 Gradle 项目、各自的 README）：
 
-| Minecraft | 目录 | NeoForge | Java |
+**发布版本与源码目录对照**（同组内 API 一致，一个 jar 覆盖多版本；构建/发布宿主 = 组内最低版本目录）：
+
+| 发布 jar 覆盖的 Minecraft | 构建目录（宿主） | NeoForge | Java |
 |---|---|---|---|
 | 1.21.1 | [`blackanninsstatistics-template-1.21.1/`](blackanninsstatistics-template-1.21.1/) | 21.1.x | 21 |
 | 1.21.3 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.3/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.3/) | 21.3.x | 21 |
-| 1.21.4 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.4/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.4/) | 21.4.x | 21 |
-| 1.21.5 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.5/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.5/) | 21.5.x | 21 |
-| 1.21.6 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.6/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.6/) | 21.6.x | 21 |
-| 1.21.7 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.7/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.7/) | 21.7.x | 21 |
-| 1.21.8 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.8/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.8/) | 21.8.x | 21 |
-| 1.21.9 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.9/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.9/) | 21.9.x | 21 |
-| 1.21.10 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.10/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.10/) | 21.10.x | 21 |
+| **1.21.4 – 1.21.5** | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.4-1.21.5/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.4-1.21.5/) | 21.4.x | 21 |
+| **1.21.6 – 1.21.8** | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.6-1.21.8/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.6-1.21.8/) | 21.6/21.7/21.8 | 21 |
+| **1.21.9 – 1.21.10** | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.9-1.21.10/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.9-1.21.10/) | 21.9/21.10 | 21 |
 | 1.21.11 | [`neoforge-ports/blackanninsstatistics-neoforge-1.21.11/`](neoforge-ports/blackanninsstatistics-neoforge-1.21.11/) | 21.11.x | 21 |
 | 26.1（覆盖 26.1.1/.2） | [`neoforge-ports/blackanninsstatistics-neoforge-26.1/`](neoforge-ports/blackanninsstatistics-neoforge-26.1/) | 26.1.x | 25 |
-| 26.2 | [`neoforge-ports/blackanninsstatistics-neoforge-26.2/`](neoforge-ports/blackanninsstatistics-neoforge-26.2/) | 26.2.x | 25 |
-| 26.3 | [`neoforge-ports/blackanninsstatistics-neoforge-26.3/`](neoforge-ports/blackanninsstatistics-neoforge-26.3/) | 26.3.x | 25 |
+| **26.2 – 26.3** | [`neoforge-ports/blackanninsstatistics-neoforge-26.2-26.3/`](neoforge-ports/blackanninsstatistics-neoforge-26.2-26.3/) | 26.2/26.3 | 25 |
+
+> 同组目录的源码完全一致（1.21.5/1.21.7/1.21.8/1.21.10/26.3 为隔离测试副本），发布 jar 从宿主目录构建，
+> `mods.toml` 声明该组的 Minecraft 版本范围（如 1.21.6 的 jar 声明 `[1.21.6,1.21.9)`）。
 
 > 1.21.2 无 NeoForge 稳定版（MC 1.21.2 发布 1 天即被 1.21.3 取代），社区惯例跳过。
 > 各版本的功能、数据格式、mod id 与主版本完全一致——**跨版本游玩时统计数据自动汇入同一份数据目录**。
