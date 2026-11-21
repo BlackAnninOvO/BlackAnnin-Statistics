@@ -6,7 +6,7 @@
 
 **Full per-world & per-server statistics for Minecraft — accumulated across client and version changes.**
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-blue)](https://www.minecraft.net/)[![Fabric](https://img.shields.io/badge/Fabric-全版本-blue)](https://fabricmc.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9-1.21.11-blue)](https://www.minecraft.net/)[![Fabric](https://img.shields.io/badge/Fabric-全版本-blue)](https://fabricmc.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Side](https://img.shields.io/badge/Side-Client%20Only-important)
 
@@ -22,7 +22,7 @@
 
 这个模组解决的就是这些：**你在每个存档、每个服务器里的数据会被分别记录，并汇总到同一个统计中心**。换大版本、换启动器、换电脑上的客户端都没关系——数据存在一个固定位置，会一直接着累计。
 
-本仓库是 **Fabric 版**，支持 Minecraft 1.21.11；数据格式与 NeoForge 版完全互通，换加载器数据不丢。
+本仓库是 **Fabric 版**，支持 Minecraft 1.21.9 / 1.21.10 / 1.21.11；数据格式与 NeoForge 版完全互通，换加载器数据不丢。
 
 <!-- 建议在这里插入截图：统计中心各页签 + 本次游玩小窗
 ![统计中心](https://你的图床链接/hub.png)
@@ -40,21 +40,25 @@
 - **时间双口径** — 明确区分**现实时间**（真实墙钟）与**游戏内时间**（游戏刻），所有时间统计都带标注，不再混淆。
 - **数据管理** — 明文 JSON 存储，可手动编辑；游戏内管理页支持按位置 / 按档案 / 全部删除（带二次确认）。
 
+### 本版本说明
+
+> 本构建同时覆盖 1.21.9 / 1.21.10 / 1.21.11（三端点编译验证 + intermediary 漂移检查全部通过）。
+
 ## 支持的版本与安装
 
 | 项目 | 内容 |
 |---|---|
-| Minecraft | **1.21.11** |
+| Minecraft | **1.21.9 / 1.21.10 / 1.21.11** |
 | 加载器 | [Fabric Loader](https://fabricmc.net/use/) ≥ 0.16.9（26.x 建议 ≥ 0.20.1） |
-| 依赖 | [Fabric API](https://modrinth.com/mod/fabric-api)（与你的 MC 版本匹配的构建，如 `0.141.6+1.21.11`） |
+| 依赖 | [Fabric API](https://modrinth.com/mod/fabric-api)（与你的 MC 版本匹配的构建，如 `0.134.1+1.21.9（1.21.10 用 0.138.4+1.21.10，1.21.11 用 0.141.6+1.21.11）`） |
 | Java | 21（MC 自带的运行时即满足，无需单独安装） |
-| 模组 jar | `BlackAnnin's Statistics-Fabric-1.21.11-1.0.0.jar` |
+| 模组 jar | `BlackAnnin's Statistics-Fabric-1.21.9-1.21.10-1.21.11-1.0.0.jar` |
 
 安装步骤：
 
 1. 按 [Fabric 官方安装器](https://fabricmc.net/use/) 安装对应版本的 Fabric Loader；
 2. 把与你 MC 版本匹配的 **Fabric API** 放入 `mods`；
-3. 把 `BlackAnnin's Statistics-Fabric-1.21.11-1.0.0.jar` 放入 `mods`；
+3. 把 `BlackAnnin's Statistics-Fabric-1.21.9-1.21.10-1.21.11-1.0.0.jar` 放入 `mods`；
 4. 进入游戏即可，**服务端不需要安装**，原版服务器和第三方服务器都能用。
 
 > 这是本系列 10 个 Fabric 构建之一，每个构建覆盖相邻的几个 MC 版本（构建互通时合并， API 断裂时拆分）——请按你的游戏版本挑选对应构建。
@@ -182,7 +186,7 @@ gradlew runClient    # 启动开发客户端
 
 # BlackAnnin's Statistics (Fabric, English)
 
-A client-side statistics mod for Minecraft **1.21.11** (Fabric) that fixes what the vanilla statistics screen never did: **per-world and per-server records, combined into one hub, kept across client, loader and version changes**. Data files are fully compatible with the NeoForge build.
+A client-side statistics mod for Minecraft **1.21.9 / 1.21.10 / 1.21.11** (Fabric) that fixes what the vanilla statistics screen never did: **per-world and per-server records, combined into one hub, kept across client, loader and version changes**. Data files are fully compatible with the NeoForge build.
 
 ## Features
 
@@ -200,15 +204,15 @@ A client-side statistics mod for Minecraft **1.21.11** (Fabric) that fixes what 
 
 | | |
 |---|---|
-| Minecraft | **1.21.11** |
+| Minecraft | **1.21.9 / 1.21.10 / 1.21.11** |
 | Loader | [Fabric Loader](https://fabricmc.net/use/) ≥ 0.16.9 (26.x: ≥ 0.20.1) |
-| Dependency | [Fabric API](https://modrinth.com/mod/fabric-api) matching your MC version (e.g. `0.141.6+1.21.11`) |
+| Dependency | [Fabric API](https://modrinth.com/mod/fabric-api) matching your MC version (e.g. `0.134.1+1.21.9（1.21.10 用 0.138.4+1.21.10，1.21.11 用 0.141.6+1.21.11）`) |
 | Java | 21 (bundled with Minecraft, nothing to install) |
-| Mod jar | `BlackAnnin's Statistics-Fabric-1.21.11-1.0.0.jar` |
+| Mod jar | `BlackAnnin's Statistics-Fabric-1.21.9-1.21.10-1.21.11-1.0.0.jar` |
 
 1. Install Fabric Loader for your MC version with the [official installer](https://fabricmc.net/use/);
 2. Drop the matching **Fabric API** into your `mods` folder;
-3. Drop `BlackAnnin's Statistics-Fabric-1.21.11-1.0.0.jar` into `mods`;
+3. Drop `BlackAnnin's Statistics-Fabric-1.21.9-1.21.10-1.21.11-1.0.0.jar` into `mods`;
 4. Done — **nothing to install server-side**, works on vanilla and third-party servers alike.
 
 > This is one of 10 Fabric builds in this series; each build covers a few adjacent MC versions. Pick the one matching your game version.

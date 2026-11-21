@@ -101,15 +101,28 @@ public final class ClientEvents {
      * "本次游玩"小窗切换键（F9，可在控件设置修改）。
      * NeoForge 版的 IN_GAME 冲突上下文在 Fabric 上以"界面打开时不切换"门控模拟
      * （见 {@link SessionHud#consumeToggle}），行为一致：仅游戏画面内生效。
-     * 26.3：输入栈弃用 GLFW（LWJGL），改用 SDL 键码空间——
-     * InputConstants.Type.KEYSYM 更名 KEYBOARD，GLFW.GLFW_KEY_F9(300) 由
-     * InputConstants.KEY_F9(66，SDL 扫描码) 替代，键位语义不变。
+     * 26.2–26.3 合并构建说明：输入栈自 26.3 起由 GLFW 迁移到 SDL 键码空间，
+     * InputConstants.Type 枚举成员更名（26.2=KEYSYM / 26.3=KEYBOARD，单源码无法
+     * 直接引用），且 KEY_F9 是会被编译期内联的 public static final int（两版本
+     * 常量值不同：26.2=GLFW 键码 300 / 26.3=SDL 扫描码 66，直接引用跨版本会键码错乱）。
+     * 故：①改用三参构造器 {@link KeyMapping#KeyMapping(String, int, KeyMapping.Category)}
+     * ——其内部按各版本自动选择正确的 Type（26.2=KEYSYM / 26.3=KEYBOARD，字节码已验证）；
+     * ②通过反射在运行时读取本版本 KEY_F9 真实值，规避编译期内联。键位语义（F9）不变。
      */
     static final KeyMapping TOGGLE_KEY = new KeyMapping(
             "key.blackannins_statistics.toggle_session_hud",
-            InputConstants.Type.KEYBOARD,
-            InputConstants.KEY_F9,
+            f9KeyCode(),
             KEY_CATEGORY);
+
+    /** 运行时读取本版本 InputConstants.KEY_F9 真实键码（26.2 与 26.3 常量值不同，见上）。 */
+    private static int f9KeyCode() {
+        try {
+            return com.mojang.blaze3d.platform.InputConstants.class
+                    .getField("KEY_F9").getInt(null);
+        } catch (ReflectiveOperationException e) {
+            return 66; // 26.3 SDL 扫描码兜底（正常路径不可达：两版本均存在该常量）
+        }
+    }
 
     /** Fabric 事件注册入口（等价 NeoForge 的 @SubscribeEvent 静态接线）。 */
     public static void init() {

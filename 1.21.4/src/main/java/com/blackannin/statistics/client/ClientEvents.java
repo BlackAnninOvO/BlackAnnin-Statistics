@@ -203,7 +203,11 @@ public final class ClientEvents {
             if (!(player instanceof LocalPlayer localPlayer) || localPlayer != mc.player) {
                 return InteractionResult.PASS;
             }
-            if (!localPlayer.isCreative()) {
+            // 1.21.4–1.21.5 合并构建说明：Player.isCreative 的 intermediary id 在 1.21.5
+            // 发生变更（method_7337→method_68878），单 jar 无法同时安全引用两侧；
+            // 改用 Abilities.instabuild（field_7477，intermediary 跨版本稳定，
+            // 语义等价：创造模式为 true，生存/冒险/旁观为 false）。
+            if (!localPlayer.getAbilities().instabuild) {
                 return InteractionResult.PASS; // 生存/冒险：原版统计负责
             }
             BlockState before = level.getBlockState(pos);
