@@ -22,3 +22,8 @@ replay_pid*
 # ===== 系统杂项 =====
 .DS_Store
 Thumbs.db
+
+# ===== 发布 jar 与杂项 =====
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+out/
