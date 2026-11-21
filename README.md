@@ -1,6 +1,6 @@
 # BlackAnnin's Statistics — Forge
 
-NeoForge 主版本见 **master** 分支；Fabric 版本见 **Fabric** 分支；本分支收录 **Forge 全部版本**。
+NeoForge 版本见 **NeoForge** 分支；Fabric 版本见 **Fabric** 分支；本分支收录 **Forge 全部版本**。
 
 ## 版本目录
 
